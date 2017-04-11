@@ -1,5 +1,9 @@
 package edu.cogswell.morningvoice;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -7,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.util.Calendar;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -20,6 +25,11 @@ public class MainActivity extends AppCompatActivity {
     private byte curReadStop;
     private byte [] readStopAry;
 
+    // Alarm things
+    private AlarmManager timeControl;
+    private PendingIntent timeIntent;
+    private Calendar curCalendar;
+
 
     public enum  itemReadType{Weather, File, Reddit }
     private itemReadType [] curReadList; // Contains types have been read in the current read
@@ -30,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         textReader =  new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
             @Override
@@ -54,26 +65,28 @@ public class MainActivity extends AppCompatActivity {
         curReadList = new itemReadType[readTypeNum];
         readStopAry = new byte[readLength];
 
+        // Alarm things
+        curCalendar = Calendar.getInstance();
+        curCalendar.setTimeInMillis(System.currentTimeMillis());
+
+        timeControl = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        Intent curIntent = new Intent(this, MyAlarmReceiver.class);
+        timeIntent = PendingIntent.getBroadcast(this, 0, curIntent, 0);
+
+
 
     }
-
 
     protected void run(){
         load();
-        while (read("Some Name")){
-
-        }
-
-
-
-
+        while (read("Some Name"));
 
     }
-
 
     protected boolean read(String refName){
 
         int erCheck;
+        if (textReader.isSpeaking())
         for (int i = 0; i < readInfo[secReadNum].length; i++) {
             erCheck = textReader.speak(readInfo[secReadNum][i].subSequence(0,
                     readInfo[secReadNum][i].length()),  TextToSpeech.QUEUE_ADD, null,
@@ -83,14 +96,13 @@ public class MainActivity extends AppCompatActivity {
                 // Do error code
             }
         }
-        secReadNum = (secReadNum + 1) % readLength;
-        if (secReadNum == 0){
+
+        if (++secReadNum == curReadStop){
             boolean stopCheck = load();
             return stopCheck;
         }else {
             return true;
         }
-
     }
 
     protected boolean load(){
@@ -124,10 +136,9 @@ public class MainActivity extends AppCompatActivity {
             return true;
 
         }else {
+            secReadNum = strCheck;
             return false;
         }
-
-
 
     }
 
@@ -153,7 +164,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected byte readWeather(byte checkNum){
-
 
         return checkNum;
     }
