@@ -2,17 +2,21 @@ package edu.cogswell.morningvoice;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TimePicker;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,10 +24,10 @@ public class MainActivity extends AppCompatActivity {
     private Button startBut;
     private String [][] readInfo;
     private int secReadNum;
-    private final byte readLength = 10;
-    private final byte readTypeNum = 3;
-    private byte curReadStop;
-    private byte [] readStopAry;
+    private final int readLength = 10;
+    private final int readTypeNum = 3;
+    private int curReadStop;
+    private int [] readStopAry;
 
     // Alarm things
     private AlarmManager timeControl;
@@ -36,11 +40,13 @@ public class MainActivity extends AppCompatActivity {
 
     private SaveState curSaveState = new SaveState();
 
+    private int timeSinceCheckedWeather;
+    private final int minTimeUntilWeatherReset = 240;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         textReader =  new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
             @Override
@@ -63,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
         readInfo = new String[readLength][10];
         curReadList = new itemReadType[readTypeNum];
-        readStopAry = new byte[readLength];
+        readStopAry = new int[readLength];
 
         // Alarm things
         curCalendar = Calendar.getInstance();
@@ -73,11 +79,24 @@ public class MainActivity extends AppCompatActivity {
         Intent curIntent = new Intent(this, MyAlarmReceiver.class);
         timeIntent = PendingIntent.getBroadcast(this, 0, curIntent, 0);
 
+        Calendar mcurrentTime = Calendar.getInstance();
+        int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
+        int minute = mcurrentTime.get(Calendar.MINUTE);
 
+
+
+        /* Voice things
+        Set<Voice> voiceList = textReader.getVoices();
+        for (Voice curVoice : voiceList){
+            curVoice.
+        }
+        */
 
     }
 
     protected void run(){
+
+        Options.getInstance().setOptions();
         load();
         while (read("Some Name"));
 
@@ -98,8 +117,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (++secReadNum == curReadStop){
-            boolean stopCheck = load();
-            return stopCheck;
+
+            return load();
         }else {
             return true;
         }
@@ -116,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
             curTypeCheck = curSaveState.getSaveType();
             strCheck = getLoadFunction(strCheck, curTypeCheck);
             if (!curSaveState.isCompleted() || strCheck >= readLength - (readLength /4)){
-                return false;
+                return true;
             }else{
                 curTypeCheck = curOptions.getReadOrder()[typeCheck];
             }
@@ -133,11 +152,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (strCheck == 0){
             // Empty curReadList
-            return true;
+            return false;
 
         }else {
             secReadNum = strCheck;
-            return false;
+            return true;
         }
 
     }

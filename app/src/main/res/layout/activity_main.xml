@@ -11,96 +11,186 @@
     tools:context="edu.cogswell.morningvoice.MainActivity">
 
     <LinearLayout
-        android:orientation="vertical"
+        android:id="@+id/Options"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/Voices">
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/checkBox6"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CheckBox" />
+
+        <CheckBox
+            android:id="@+id/checkBox5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CheckBox" />
+
+        <CheckBox
+            android:id="@+id/checkBox4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CheckBox" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volume" />
+
+        <SeekBar
+            android:id="@+id/volume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="100" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/Reddit"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/readsReddit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="CheckBox" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/Weather"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/doesWeather"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Reads Weather" />
+
+        <CheckBox
+            android:id="@+id/saysWind"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Wind Info" />
+
+        <CheckBox
+            android:id="@+id/saysCloudy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Cloudy Info" />
+
+        <CheckBox
+            android:id="@+id/saysPressure"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Pressure Info" />
+
+        <CheckBox
+            android:id="@+id/saysHumidity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Humidity Info" />
+
+        <CheckBox
+            android:id="@+id/saysSunsetRise"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Sunset and Rise Times" />
+
+        <CheckBox
+            android:id="@+id/saysHighLowTemp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="High and Low Temperatures" />
+
+        <CheckBox
+            android:id="@+id/saysCurTemp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Current Temperature" />
+
+        <CheckBox
+            android:id="@+id/saysPrecipitation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Precipitation Info" />
+
+        <CheckBox
+            android:id="@+id/saysUVIndex"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="UV Index Info" />
+
+        <CheckBox
+            android:id="@+id/saysAirPollution"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Air Pollution Info" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/Voices"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <RadioGroup
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <RadioButton
-                android:text="RadioButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:id="@+id/radioButton3"
-                android:layout_weight="1" />
-
-            <RadioButton
-                android:text="RadioButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="RadioButton" />
+
+            <RadioButton
                 android:id="@+id/radioButton2"
-                android:layout_weight="1" />
-
-            <RadioButton
-                android:text="RadioButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="RadioButton" />
+
+            <RadioButton
                 android:id="@+id/radioButton"
-                android:layout_weight="1" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="RadioButton" />
         </RadioGroup>
     </LinearLayout>
 
     <LinearLayout
-        android:orientation="vertical"
+        android:id="@+id/File"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/Weather">
+        android:orientation="vertical">
 
         <CheckBox
-            android:text="CheckBox"
+            android:id="@+id/readsFile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/checkBox"
-            android:layout_weight="1" />
-
-        <CheckBox
-            android:text="CheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/checkBox2"
-            android:layout_weight="1" />
-
-        <CheckBox
-            android:text="CheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/checkBox3"
-            android:layout_weight="1" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/Reddit"></LinearLayout>
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/Options">
-
-        <CheckBox
-            android:text="CheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/checkBox6" />
-
-        <CheckBox
-            android:text="CheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/checkBox5" />
-
-        <CheckBox
-            android:text="CheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/checkBox4" />
+            android:checked="false"
+            android:text="Reads From File" />
     </LinearLayout>
 
     <LinearLayout
@@ -145,6 +235,8 @@
     <TimePicker
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/timePicker" />
+        android:id="@+id/timePicker"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>
