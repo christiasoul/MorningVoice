@@ -130,20 +130,6 @@
             android:layout_weight="1"
             android:text="Precipitation Info" />
 
-        <CheckBox
-            android:id="@+id/saysUVIndex"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="UV Index Info" />
-
-        <CheckBox
-            android:id="@+id/saysAirPollution"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Air Pollution Info" />
-
     </LinearLayout>
 
     <LinearLayout
@@ -208,6 +194,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" >
+
+            <ExpandableListView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
 
             <ExpandableListView
                 android:layout_width="match_parent"

@@ -5,8 +5,15 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -14,11 +21,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TimePicker;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Set;
+import java.util.jar.Manifest;
 
 public class MainActivity extends AppCompatActivity {
+
 
     private TextToSpeech textReader;
     private Button startBut;
@@ -28,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private final int readTypeNum = 3;
     private int curReadStop;
     private int [] readStopAry;
+    private WeatherInfo myWeather;
+    private ExpandableListAdapter myAdapter;
+    private LocationManager locManager;
+    private GoogleApiClient myGoogleApiClient;
 
     // Alarm things
     private AlarmManager timeControl;
@@ -40,13 +56,42 @@ public class MainActivity extends AppCompatActivity {
 
     private SaveState curSaveState = new SaveState();
 
-    private int timeSinceCheckedWeather;
-    private final int minTimeUntilWeatherReset = 240;
+    private long timeCheckedWeather;
+    private final long minTimeUntilWeatherReset = 240 * 60 * 1000;
 
+    /*
     @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+    */
+
+        @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
 
         textReader =  new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
             @Override
@@ -71,6 +116,39 @@ public class MainActivity extends AppCompatActivity {
         curReadList = new itemReadType[readTypeNum];
         readStopAry = new int[readLength];
 
+        // Create an instance of GoogleAPIClient.
+        if (myGoogleApiClient == null) {
+            myGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+
+        locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        Location myLoc;
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+
+                myLoc = new Location(location);
+                locManager.removeUpdates(locationListener);
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            public void onProviderEnabled(String provider) {}
+
+            public void onProviderDisabled(String provider) {}
+        };
+
+        if ( ContextCompat.checkSelfPermission( this,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
+            //ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+            //        MY_PERMISSION_ACCESS_COURSE_LOCATION);
+        }else {
+            locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        }
+
         // Alarm things
         curCalendar = Calendar.getInstance();
         curCalendar.setTimeInMillis(System.currentTimeMillis());
@@ -83,7 +161,28 @@ public class MainActivity extends AppCompatActivity {
         int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
         int minute = mcurrentTime.get(Calendar.MINUTE);
 
+        myWeather = new WeatherInfo();
 
+        // Setup for adapter
+        String [] headerNames = {"Options", "Weather", "Reddit", "File"};
+        String [] headerVal = {"Opt", "Wea", "Redd", "Fil"};
+        String [][] childrenNames = {
+                {},
+                {"Reads Weather", "Reads City Name", "Reads Temperature", "Reads Humidity",
+                    "Reads Pressure", "Reads Wind", "Reads Cloudiness", "Reads Visibility",
+                    "Reads Precipitation", "Reads Sunset And Sunrise"},
+                {"Reads Reddit"},
+                {"Reads File"}
+        };
+        String[][] childrenVals =  {
+                {},
+                {"Wea", "Cit", "Tem", "Hum", "Pres", "Win", "Clo", "Vis", "Prec", "Sun"},
+                {"Red"},
+                {"Fil"}
+        };
+
+        myAdapter = new ExpandableListAdapter(getApplicationContext(), headerNames,
+                headerVal , childrenNames, childrenVals  , Options.getInstance().getBools() );
 
         /* Voice things
         Set<Voice> voiceList = textReader.getVoices();
@@ -92,9 +191,17 @@ public class MainActivity extends AppCompatActivity {
         }
         */
 
+
+
+
     }
 
     protected void run(){
+
+        // fix, make time secure
+        if (SystemClock.elapsedRealtime() > minTimeUntilWeatherReset + timeSinceCheckedWeather){
+            timeCheckedWeather = myWeather.update(locManager);
+        }
 
         Options.getInstance().setOptions();
         load();
@@ -196,5 +303,11 @@ public class MainActivity extends AppCompatActivity {
 
         return checkNum;
     }
+
+    protected void getLocation(){
+
+
+    }
+
 
 }
