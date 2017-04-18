@@ -14,6 +14,8 @@ import java.io.FileNotFoundException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -117,7 +119,7 @@ public class Options extends Activity {
 
     public void writeToFile(int groupNum, int childNum, String val){
         try{
-            String fileDir = "./././res/values/optionscheck.xml"
+            String fileDir = "./././res/values/optionscheck.xml";
             File optionChecks = new File(fileDir);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -144,15 +146,15 @@ public class Options extends Activity {
             //  !!! ASK FOR HELP
 
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            xformer.transform(optionChecks, new StreamResult(new File(fileDir)));
+            Result output = new StreamResult(new File(fileDir));
+            Source input = new DOMSource(boolDoc);
+            xformer.transform(input, output);
 
         }catch(Exception ex){
             System.out.printf("Exiting on writeToFile()");
         }
 
-
     }
-
 
     public void setOptions(){
 
