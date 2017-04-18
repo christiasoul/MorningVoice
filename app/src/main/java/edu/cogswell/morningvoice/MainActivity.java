@@ -21,9 +21,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TimePicker;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
-
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Set;
@@ -43,7 +40,6 @@ public class MainActivity extends AppCompatActivity {
     private WeatherInfo myWeather;
     private ExpandableListAdapter myAdapter;
     private LocationManager locManager;
-    private GoogleApiClient myGoogleApiClient;
 
     // Alarm things
     private AlarmManager timeControl;
@@ -86,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     }
     */
 
-        @Override
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -116,37 +112,16 @@ public class MainActivity extends AppCompatActivity {
         curReadList = new itemReadType[readTypeNum];
         readStopAry = new int[readLength];
 
-        // Create an instance of GoogleAPIClient.
-        if (myGoogleApiClient == null) {
-            myGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
 
         locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        Location myLoc;
-        LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
 
-                myLoc = new Location(location);
-                locManager.removeUpdates(locationListener);
-            }
-
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-            public void onProviderEnabled(String provider) {}
-
-            public void onProviderDisabled(String provider) {}
-        };
 
         if ( ContextCompat.checkSelfPermission( this,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
-            //ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
-            //        MY_PERMISSION_ACCESS_COURSE_LOCATION);
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                MY_PERMISSION_ACCESS_COURSE_LOCATION);
         }else {
-            locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+            Location myLoc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         }
 
         // Alarm things
