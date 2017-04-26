@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <Options/>
+    <Options city="null" time="null" zip="null" country="null" volume="100"/>
     <Weather reads="true" city="true" temperature="true" humidity="true" pressure="true"
         wind="true" clouds="true" visibility="true" precipitation="true" sun="true">
     </Weather>
     <Reddit reads="false"/>
     <File reads="true"/>
+    <Alarm sun="false" mon="false" tue="false" wed="false" thur="false"
+        fri="false" sat="false" time="12:00"/>
 </resources>

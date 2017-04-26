@@ -82,10 +82,7 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
             public void onClick(View v) {
                 checkedState[grpPos][childPos] ^= true;
                 tick.setVisibility(View.VISIBLE);
-
-                Options.getInstance().writeToFile(grpPos, childPos,
-                        Boolean.toString(checkedState[grpPos][childPos]));
-
+                Options.getInstance().setBool(grpPos, childPos, checkedState[grpPos][childPos]);
                 // have check for if the main is clicked, all others become gray and not bold
                 // Also edit file version of item
             }

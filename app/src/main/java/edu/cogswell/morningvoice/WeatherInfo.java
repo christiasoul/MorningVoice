@@ -3,13 +3,22 @@ package edu.cogswell.morningvoice;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.SystemClock;
+import android.renderscript.ScriptGroup;
 
+import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,6 +28,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
  */
 
 public class WeatherInfo {
+    private final String weatherLoc = "./././res/xml/weatherInfo.xml";
+
     private String cityName;
     private String curRainType; // volume for last 3 hours
     private float curRainAmt;
@@ -50,9 +61,6 @@ public class WeatherInfo {
     private boolean usesMetric;
 
 
-    public void writeToFile(){
-
-    }
 
     private void readFromFile(){
 
@@ -165,7 +173,7 @@ public class WeatherInfo {
 
 
         }catch(Exception e){
-
+            System.out.printf("There seemed to not be a file to read from for weather");
 
         }
 
@@ -192,18 +200,62 @@ public class WeatherInfo {
 
     }
 
-    public long update(LocationManager locManager){
+    private void getWebDataToFile(String call){
+        HttpURLConnection connec = null;
+        InputStream inStream = null;
+        OutputStream outStream = null;
+
+        try{
+            connec = (HttpURLConnection)(new URL(call)).openConnection();
+            connec.setRequestMethod("GET");
+            connec.setDoInput(true);
+            connec.setDoOutput(true);
+            connec.connect();
+
+            inStream = connec.getInputStream();
+            outStream = new FileOutputStream(weatherLoc);
+            byte[] buff = new byte[8 * 1024];
+            int bytesRead;
+            while((bytesRead = inStream.read(buff)) != -1){
+                outStream.write(buff, 0, bytesRead);
+            }
+            IOUtils.closeQuietly(inStream);
+            IOUtils.closeQuietly(outStream);
+
+
+        }catch(Throwable t){
+            System.out.printf("Could not get information from website and write to file");
+        }
+
+    }
+
+    public long update(Location loc){
 
         //GPS Things
-        String locProvider = LocationManager.NETWORK_PROVIDER;
-        Location lastKnowLoc =
+        float latit = (float)loc.getLatitude();
+        float longit = (float)loc.getLongitude();
 
-                writeToFile();
+        String weatherCall = String.format(
+                "api.openweathermap.org/data/2.5/weather?lat=%f.2&lon=%f.2&%s",
+                latit, longit, APIKey.getInstance().getAPIKey());
+
+        getWebDataToFile(weatherCall);
+        readFromFile();
         return SystemClock.elapsedRealtime();
     }
 
-    public long update(int zipCode){
+    public long update(){
 
+        int zipCode = Options.getInstance().getZipCode();
+        String countryCode = Options.getInstance().getCountryCode();
+
+        String weatherCall = String.format(
+            "api.openweathermap.org/data/2.5/weather?zip=%d,%s&%s",
+                zipCode, countryCode, APIKey.getInstance().getAPIKey() );
+
+        getWebDataToFile(weatherCall);
+        readFromFile();
+        return SystemClock.elapsedRealtime();
     }
 
     public String getString(){
@@ -322,6 +374,7 @@ public class WeatherInfo {
             return null;
         }
     }
+
 
 
 }

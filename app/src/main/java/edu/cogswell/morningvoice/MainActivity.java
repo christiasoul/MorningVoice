@@ -1,59 +1,58 @@
 package edu.cogswell.morningvoice;
 
 import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.app.TimePickerDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.Voice;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ExpandableListView;
 import android.widget.TimePicker;
 
-import java.util.Calendar;
 import java.util.Locale;
-import java.util.Set;
-import java.util.jar.Manifest;
 
 public class MainActivity extends AppCompatActivity {
 
 
-    private TextToSpeech textReader;
+    private static TextToSpeech textReader;
     private Button startBut;
-    private String [][] readInfo;
-    private int secReadNum;
-    private final int readLength = 10;
-    private final int readTypeNum = 3;
-    private int curReadStop;
-    private int [] readStopAry;
-    private WeatherInfo myWeather;
-    private ExpandableListAdapter myAdapter;
-    private LocationManager locManager;
+    private static String [][] readInfo;
+    private static int secReadNum;
+    private static final int readLength = 10;
+    private static final int readTypeNum = 3;
+    private static int curReadStop;
+    private static int [] readStopAry;
+    private static WeatherInfo myWeather;
+    private static ExpandableListAdapter myAdapter;
+    private static ExpandableListView myExpand;
+    private static int curWriteSection;
+
+    // Location
+    private static LocationManager locManager;
+    private static Location myLoc;
+    private static int MY_PERMISSION_ACCESS_COURSE_LOCATION = 358;
 
     // Alarm things
-    private AlarmManager timeControl;
-    private PendingIntent timeIntent;
-    private Calendar curCalendar;
+    private static AlarmManager timeControl;
+    private static TimePicker myPicker;
+    private static Button [] dayButtons;
+    private static AlarmInfo myAlarm;
 
 
     public enum  itemReadType{Weather, File, Reddit }
-    private itemReadType [] curReadList; // Contains types have been read in the current read
+    private static itemReadType [] curReadList; // Contains types have been read in the current read
 
-    private SaveState curSaveState = new SaveState();
+    private static SaveState curSaveState = new SaveState();
 
-    private long timeCheckedWeather;
-    private final long minTimeUntilWeatherReset = 240 * 60 * 1000;
+    private static long timeCheckedWeather;
+    private final static long minTimeUntilWeatherReset = 240 * 60 * 1000;
 
     /*
     @Override
@@ -88,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
+        System.out.printf("\n\nStarting text to speech\n");
 
         textReader =  new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
             @Override
@@ -96,10 +96,12 @@ public class MainActivity extends AppCompatActivity {
                     textReader.setLanguage(Locale.getDefault());
                 }else {
                     // Give error dialog box
-
+                    System.out.printf("Could not find language");
                 }
             }
         });
+
+        curWriteSection = 0;
 
         startBut.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,8 +113,10 @@ public class MainActivity extends AppCompatActivity {
         readInfo = new String[readLength][10];
         curReadList = new itemReadType[readTypeNum];
         readStopAry = new int[readLength];
+        curReadStop = 0;
 
 
+        System.out.printf("Doing location\n");
         locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
 
@@ -121,21 +125,12 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
                 MY_PERMISSION_ACCESS_COURSE_LOCATION);
         }else {
-            Location myLoc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            myLoc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         }
 
         // Alarm things
-        curCalendar = Calendar.getInstance();
-        curCalendar.setTimeInMillis(System.currentTimeMillis());
 
-        timeControl = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        Intent curIntent = new Intent(this, MyAlarmReceiver.class);
-        timeIntent = PendingIntent.getBroadcast(this, 0, curIntent, 0);
-
-        Calendar mcurrentTime = Calendar.getInstance();
-        int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
-        int minute = mcurrentTime.get(Calendar.MINUTE);
-
+        System.out.printf("Doing weather\n");
         myWeather = new WeatherInfo();
 
         // Setup for adapter
@@ -147,17 +142,20 @@ public class MainActivity extends AppCompatActivity {
                     "Reads Pressure", "Reads Wind", "Reads Cloudiness", "Reads Visibility",
                     "Reads Precipitation", "Reads Sunset And Sunrise"},
                 {"Reads Reddit"},
-                {"Reads File"}
+                {"Reads File"},
         };
         String[][] childrenVals =  {
                 {},
                 {"Wea", "Cit", "Tem", "Hum", "Pres", "Win", "Clo", "Vis", "Prec", "Sun"},
                 {"Red"},
-                {"Fil"}
+                {"Fil"},
         };
 
+        System.out.printf("Doing expandable list\n");
+        myExpand = (ExpandableListView)findViewById(R.id.expand_list);
         myAdapter = new ExpandableListAdapter(getApplicationContext(), headerNames,
                 headerVal , childrenNames, childrenVals  , Options.getInstance().getBools() );
+        myExpand.setAdapter(myAdapter);
 
         /* Voice things
         Set<Voice> voiceList = textReader.getVoices();
@@ -166,16 +164,99 @@ public class MainActivity extends AppCompatActivity {
         }
         */
 
+        dayButtons = new Button[7];
+        dayButtons[0] = (Button)findViewById(R.id.sun);
+        dayButtons[1] = (Button)findViewById(R.id.mon);
+        dayButtons[2] = (Button)findViewById(R.id.tue);
+        dayButtons[3] = (Button)findViewById(R.id.wed);
+        dayButtons[4] = (Button)findViewById(R.id.thu);
+        dayButtons[5] = (Button)findViewById(R.id.fri);
+        dayButtons[6] = (Button)findViewById(R.id.sat);
 
+        dayButtons[0].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(0);
+                Options.getInstance().setButtonsAll();
+            }
+        });
+        dayButtons[1].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(1);
+                Options.getInstance().setButtonsAll();
+            }
+        });
+        dayButtons[2].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(2);
+                Options.getInstance().setButtonsAll();
+            }
+        });
+        dayButtons[3].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(3);
+                Options.getInstance().setButtonsAll();
+            }
+        });
+        dayButtons[4].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(4);
+                Options.getInstance().setButtonsAll();
+            }
+        });
+        dayButtons[5].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(5);
+                Options.getInstance().setButtonsAll();
+            }
+        });
+        dayButtons[6].setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Options.getInstance().setDay(6);
+                Options.getInstance().setButtonsAll();
+            }
+        });
 
+        startBut = (Button)findViewById(R.id.run);
+
+        startBut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                run();
+            }
+        });
+
+        myPicker = (TimePicker)findViewById(R.id.timePicker);
+
+        timeControl = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        myAlarm = new AlarmInfo(myPicker, timeControl, getApplicationContext());
 
     }
 
-    protected void run(){
+    public static void run(){
 
+        System.out.printf("Running");
         // fix, make time secure
-        if (SystemClock.elapsedRealtime() > minTimeUntilWeatherReset + timeSinceCheckedWeather){
-            timeCheckedWeather = myWeather.update(locManager);
+        if (SystemClock.elapsedRealtime() > minTimeUntilWeatherReset + timeCheckedWeather ||
+                SystemClock.elapsedRealtime() < timeCheckedWeather){
+            // Update
+            if (Options.getInstance().getZipCode() == 0 || Options.getInstance().getCountryCode().contains("null")){
+                if (myLoc != null){
+                    // Prompt user to input zip code and country code or turn off weather
+                }else {
+                    timeCheckedWeather = myWeather.update(myLoc);
+                }
+            }else{
+                //
+                timeCheckedWeather = myWeather.update();
+            }
+
         }
 
         Options.getInstance().setOptions();
@@ -184,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    protected boolean read(String refName){
+    protected static boolean read(String refName){
 
         int erCheck;
         if (textReader.isSpeaking())
@@ -206,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected boolean load(){
+    protected static boolean load(){
         byte typeCheck = 0;
         byte strCheck = 0;
         Options curOptions = Options.getInstance();
@@ -243,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    protected boolean checkTypeAr(itemReadType[] ar, itemReadType item){
+    protected static boolean checkTypeAr(itemReadType[] ar, itemReadType item){
         for (int i = 0; i < ar.length; i++){
 
             if (ar[i] == item) {return true;}
@@ -252,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    protected byte getLoadFunction(byte checkNum, itemReadType setReadCheck){
+    protected static byte getLoadFunction(byte checkNum, itemReadType setReadCheck){
         if (setReadCheck == itemReadType.Weather){
             checkNum = readWeather(checkNum);
         }else if (setReadCheck == itemReadType.Reddit){
@@ -264,17 +345,18 @@ public class MainActivity extends AppCompatActivity {
         return checkNum;
     }
 
-    protected byte readWeather(byte checkNum){
+    protected static byte readWeather(byte checkNum){
+        //Need to be changed for
+        readInfo[curWriteSection][checkNum++] = myWeather.getString();
+        return checkNum;
+    }
+
+    protected static byte readReddit(byte checkNum){
 
         return checkNum;
     }
 
-    protected byte readReddit(byte checkNum){
-
-        return checkNum;
-    }
-
-    protected byte readFile(byte checkNum){
+    protected static byte readFile(byte checkNum){
 
         return checkNum;
     }
