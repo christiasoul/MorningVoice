@@ -122,10 +122,10 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             grid = inflater.inflate(R.layout.list_group, null);
         }else{
-            grid = (View)convertView;
+            grid = convertView;
         }
 
-        TextView lblListHeader = (TextView) convertView
+        TextView lblListHeader = (TextView) grid
                 .findViewById(R.id.lblListHeader);
         lblListHeader.setTypeface(null, Typeface.BOLD);
         lblListHeader.setText(getGroup(groupPosition).toString());

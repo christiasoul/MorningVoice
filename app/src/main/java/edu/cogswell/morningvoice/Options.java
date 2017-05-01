@@ -1,10 +1,12 @@
 package edu.cogswell.morningvoice;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.TimePicker;
 
@@ -35,6 +37,7 @@ public class Options extends Activity {
 
     private MainActivity.itemReadType [] readOrder;
     private byte readLen;
+    private Context myContext;
 
     //Voice
     //private byte voiceType;
@@ -53,7 +56,6 @@ public class Options extends Activity {
     private boolean saysPressure;
     private boolean saysHumidity;
     private boolean saysSunsetRise;
-    private boolean saysHighLowTemp;
     private boolean saysCurTemp;
     private boolean saysPrecipitation;
     private boolean saysVisibility;
@@ -76,11 +78,6 @@ public class Options extends Activity {
         setOptions();
     }
 
-
-
-    public static Options getOurInstance() {        return ourInstance; }
-
-
     //public byte getVoiceType() {        return voiceType;    }
     public int getVolume() {        return volume;    }
     public boolean isSaysCity(){    return saysCity;    }
@@ -91,7 +88,6 @@ public class Options extends Activity {
     public boolean isSaysPressure() {        return saysPressure;    }
     public boolean isSaysHumidity() {        return saysHumidity;    }
     public boolean isSaysSunsetRise() {        return saysSunsetRise;    }
-    public boolean isSaysHighLowTemp() {        return saysHighLowTemp;    }
     public boolean isSaysCurTemp() {        return saysCurTemp;    }
     public boolean isSaysPrecipitation() {        return saysPrecipitation;    }
     public boolean isSaysVisibility(){  return saysVisibility;   }
@@ -106,29 +102,17 @@ public class Options extends Activity {
     public void setDay(int dayNum) {   days[dayNum] ^= true; }
 
     private SeekBar volumeControl;
+    private Button [] dayButtons;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        volumeControl = (SeekBar) findViewById(R.id.volume);
 
-        volumeControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                volume = progress;
-            }
-
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-
-        });
     }
+
+
 
     public void writeToFile(long timeSince){
         try{
@@ -153,44 +137,44 @@ public class Options extends Activity {
                     {"sun", "mon", "tue", "wed", "thu", "fri", "sat", "time"}
             };
 
-            ((Element)(root.getElementsByTagName(headerList[0])).item(0))
+            (root.getElementsByTagName(headerList[0])).item(0)
                     .getAttributes().getNamedItem(childList[0][1]).setNodeValue(Long.toString(timeSince));
             if (zipCode != 0) {
-                ((Element) (root.getElementsByTagName(headerList[0])).item(0))
+                (root.getElementsByTagName(headerList[0])).item(0)
                         .getAttributes().getNamedItem(childList[0][2]).setNodeValue(Integer.toString(zipCode));
             }
             if (countryCode != null) {
-                ((Element) (root.getElementsByTagName(headerList[0])).item(0))
+                (root.getElementsByTagName(headerList[0])).item(0)
                         .getAttributes().getNamedItem(childList[0][3]).setNodeValue(countryCode);
             }
-            ((Element)(root.getElementsByTagName(headerList[0])).item(0))
+            (root.getElementsByTagName(headerList[0])).item(0)
                     .getAttributes().getNamedItem(childList[0][4]).setNodeValue(Integer.toString(volume));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][0]).setNodeValue(Boolean.toString(doesWeather));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][1]).setNodeValue(Boolean.toString(saysCity));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][2]).setNodeValue(Boolean.toString(saysCurTemp));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][3]).setNodeValue(Boolean.toString(saysHumidity));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][4]).setNodeValue(Boolean.toString(saysPressure));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][5]).setNodeValue(Boolean.toString(saysWind));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][6]).setNodeValue(Boolean.toString(saysCloudy));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][7]).setNodeValue(Boolean.toString(saysVisibility));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][8]).setNodeValue(Boolean.toString(saysPrecipitation));
-            ((Element)(root.getElementsByTagName(headerList[1])).item(0))
+            (root.getElementsByTagName(headerList[1])).item(0)
                     .getAttributes().getNamedItem(childList[1][9]).setNodeValue(Boolean.toString(saysSunsetRise));
-            ((Element)(root.getElementsByTagName(headerList[2])).item(0))
+            (root.getElementsByTagName(headerList[2])).item(0)
                     .getAttributes().getNamedItem(childList[2][0]).setNodeValue(Boolean.toString(readsReddit));
-            ((Element)(root.getElementsByTagName(headerList[3])).item(0))
+            (root.getElementsByTagName(headerList[3])).item(0)
                     .getAttributes().getNamedItem(childList[3][0]).setNodeValue(Boolean.toString(readsFile));
             for (int i = 0; i < 7; i++) {
-                ((Element) (root.getElementsByTagName(headerList[4])).item(0))
+                (root.getElementsByTagName(headerList[4])).item(0)
                         .getAttributes().getNamedItem(childList[4][i]).setNodeValue(Boolean.toString(days[i]));
             }
 
@@ -220,33 +204,57 @@ public class Options extends Activity {
     public void setButtonColor(Button targButton, boolean colored){
         if (colored) {
             targButton.setBackgroundTintList(ContextCompat.getColorStateList(
-                    getApplicationContext(), R.color.button_pressed ));
+                    myContext, R.color.button_pressed ));
         }else{
-            targButton.setBackgroundTintList(null);
+            targButton.setBackgroundTintList(ContextCompat.getColorStateList(
+                    myContext, R.color.button_not_pressed ));
         }
     }
 
     public void setButtonsAll(){
-        setContentView(R.layout.activity_main);
 
-        Button [] dayButtons = {
-                (Button)findViewById(R.id.sun), (Button)findViewById(R.id.mon), (Button)findViewById(R.id.tue),
-                (Button)findViewById(R.id.wed), (Button)findViewById(R.id.thu), (Button)findViewById(R.id.fri),
-                (Button)findViewById(R.id.sat)
-        };
 
         for (int i = 0; i < 7; i++){
             setButtonColor(dayButtons[i], days[i]);
         }
     }
 
+    public void setViews(Button [] inDayButtons, SeekBar inVolumeControl, Context inMyContext){
+        volumeControl = inVolumeControl;
+        dayButtons = inDayButtons;
+        myContext = inMyContext;
+
+        volumeControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int volume = progress;
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+
+        });
+
+    }
+
     public void setOptions(){
 
         System.out.printf("Doing option things");
-        setContentView(R.layout.activity_main);
+
+        Context myContext = getBaseContext();
+
 
         //voice type/volume
-        volume = ((SeekBar)findViewById(R.id.volume)).getProgress();
+        if (volumeControl != null){
+            volume = volumeControl.getProgress();
+        }
+
+        // setup days in case
+        for (int i = 0; i < 7; i++) {   days[i] = false;    }
 
         readOrder = new MainActivity.itemReadType[1];
         readOrder[0] = MainActivity.itemReadType.Weather;
@@ -267,7 +275,7 @@ public class Options extends Activity {
             boolean [] weathBool = new boolean [weatherOp.getLength()];
 
             for (int i = 0; i < weatherOp.getLength(); i++){
-                Boolean.getBoolean(((Element)weatherOp.item(0)).getAttribute(weatherList[i]));
+                weathBool[i] = Boolean.getBoolean(((Element)weatherOp.item(0)).getAttribute(weatherList[i]));
             }
             doesWeather = weathBool[0];
             saysCity = weathBool[1];
@@ -303,7 +311,7 @@ public class Options extends Activity {
             };
 
             for (int i = 0; i < 7; i++) {
-                days[i] = Boolean.getBoolean(((Element)alarmOp.item(0)).getAttribute(weatherList[i]));
+                days[i] = Boolean.getBoolean(((Element)alarmOp.item(0)).getAttribute(alarmList[i]));
             }
 
             setButtonsAll();

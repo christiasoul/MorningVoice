@@ -1,21 +1,16 @@
 package edu.cogswell.morningvoice;
 
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.SystemClock;
-import android.renderscript.ScriptGroup;
 
 import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -152,10 +147,10 @@ public class WeatherInfo {
             }
 
             if (precipitation != null){
-                if (precipitation.getAttribute("mode") == "snow"){
+                if (precipitation.getAttribute("mode") .equals( "snow")){
                     curRainType = "snow";
                     curRainAmt = Float.parseFloat(precipitation.getAttribute("value"));
-                }else if (precipitation.getAttribute("mode") == "rain"){
+                }else if (precipitation.getAttribute("mode").equals( "rain")){
                     curRainType = "rain";
                     curRainAmt = Float.parseFloat(precipitation.getAttribute("value"));
                 }else{
@@ -292,7 +287,7 @@ public class WeatherInfo {
             if (curCloudyName != null && curOptions.isSaysCloudy()) {
                 retString += " currently there is " + curCloudyName;
                 if (!Float.isNaN(curCloudy)) {
-                    retString += String.format("and it is %.2f % cloudy", curCloudy);
+                    retString += String.format("and it is %.2f %% cloudy", curCloudy);
                 }
                 retString += ".";
             }

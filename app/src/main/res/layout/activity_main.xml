@@ -154,25 +154,6 @@
         </RadioGroup>
     </LinearLayout>
     -->
-    <LinearLayout
-        android:id="@+id/File"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <CheckBox
-            android:id="@+id/readsFile"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:text="Reads From File" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/Web"></LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -210,7 +191,7 @@
                     android:layout_weight="1"
                     android:text="Sun"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/mon"
@@ -221,7 +202,7 @@
                     android:layout_weight="1"
                     android:text="Mon"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/tue"
@@ -232,7 +213,7 @@
                     android:layout_weight="1"
                     android:text="Tue"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/wed"
@@ -243,7 +224,7 @@
                     android:layout_weight="1"
                     android:text="Wed"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/thu"
@@ -254,7 +235,7 @@
                     android:layout_weight="1"
                     android:text="Thu"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/fri"
@@ -265,7 +246,7 @@
                     android:layout_weight="1"
                     android:text="Fri"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/sat"
@@ -276,7 +257,7 @@
                     android:layout_weight="1"
                     android:text="Sat"
                     android:textAppearance="@android:style/TextAppearance.DeviceDefault.Widget.Button"
-                    android:textSize="11sp" />
+                    android:textSize="10sp" />
 
             </LinearLayout>
 
@@ -289,7 +270,7 @@
                 android:text="Volume"
                 android:textAlignment="center"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:textColor="?attr/editTextColor"
+                android:textColor="?attr/actionMenuTextColor"
                 android:textStyle="bold" />
 
             <SeekBar

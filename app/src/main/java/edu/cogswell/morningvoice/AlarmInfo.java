@@ -9,7 +9,6 @@ import android.widget.TimePicker;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import static android.content.Context.ALARM_SERVICE;
 
 /**
  * Created by Christian on 4/21/2017.
@@ -18,8 +17,8 @@ import static android.content.Context.ALARM_SERVICE;
 public class AlarmInfo {
 
     boolean [] days = new boolean[7];
-    private ArrayList<Calendar> alarmList;
-    private TimePicker myPick;
+    private final ArrayList<Calendar> alarmList;
+    private final TimePicker myPick;
     private AlarmManager alarmManage;
     private Intent myIntent;
     private Context myContext;

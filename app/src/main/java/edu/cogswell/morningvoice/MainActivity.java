@@ -5,15 +5,18 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ExpandableListView;
+import android.widget.SeekBar;
 import android.widget.TimePicker;
 
 import java.util.Locale;
@@ -30,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private static int curReadStop;
     private static int [] readStopAry;
     private static WeatherInfo myWeather;
-    private static ExpandableListAdapter myAdapter;
-    private static ExpandableListView myExpand;
+    private ExpandableListAdapter myAdapter;
+    private ExpandableListView myExpand;
     private static int curWriteSection;
 
     // Location
@@ -41,9 +44,9 @@ public class MainActivity extends AppCompatActivity {
 
     // Alarm things
     private static AlarmManager timeControl;
-    private static TimePicker myPicker;
+    private TimePicker myPicker;
     private static Button [] dayButtons;
-    private static AlarmInfo myAlarm;
+    private AlarmInfo myAlarm;
 
 
     public enum  itemReadType{Weather, File, Reddit }
@@ -103,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
         curWriteSection = 0;
 
+        startBut = (Button) findViewById(R.id.run);
         startBut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -116,17 +120,39 @@ public class MainActivity extends AppCompatActivity {
         curReadStop = 0;
 
 
-        System.out.printf("Doing location\n");
+        Log.d("D","Doing Location");
         locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-
-        if ( ContextCompat.checkSelfPermission( this,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
-                MY_PERMISSION_ACCESS_COURSE_LOCATION);
-        }else {
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP ) {
+            if (ContextCompat.checkSelfPermission(this,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                            MY_PERMISSION_ACCESS_COURSE_LOCATION);
+            } else {
+                myLoc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                Log.d("D","Got Location");
+            }
+        }else{
             myLoc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Log.d("D","Got Location");
         }
+
+        //Option things
+
+        SeekBar volumeControl = (SeekBar) findViewById(R.id.volume);
+
+        Button [] dayButtons = new Button[7];
+
+        dayButtons[0] = (Button)findViewById(R.id.sun);
+        dayButtons[1] = (Button)findViewById(R.id.mon);
+        dayButtons[2] = (Button)findViewById(R.id.tue);
+        dayButtons[3] = (Button)findViewById(R.id.wed);
+        dayButtons[4] = (Button)findViewById(R.id.thu);
+        dayButtons[5] = (Button)findViewById(R.id.fri);
+        dayButtons[6] = (Button)findViewById(R.id.sat);
+
+        Options.getInstance().setViews(dayButtons, volumeControl, getBaseContext());
+
 
         // Alarm things
 
@@ -248,24 +274,29 @@ public class MainActivity extends AppCompatActivity {
             // Update
             if (Options.getInstance().getZipCode() == 0 || Options.getInstance().getCountryCode().contains("null")){
                 if (myLoc != null){
-                    // Prompt user to input zip code and country code or turn off weather
-                }else {
+                    Log.d("D","Updating Weather with location");
                     timeCheckedWeather = myWeather.update(myLoc);
+
+                }else {
+                    // Prompt user to input zip code and country code or turn off weather
                 }
             }else{
                 //
+                Log.d("D","Updating Weather");
                 timeCheckedWeather = myWeather.update();
+
             }
 
         }
 
         Options.getInstance().setOptions();
         load();
-        while (read("Some Name"));
+        read("Some Name");
+        // while(read("Some Name"));
 
     }
 
-    protected static boolean read(String refName){
+    private static boolean read(String refName){
 
         int erCheck;
         if (textReader.isSpeaking())
@@ -287,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected static boolean load(){
+    private static boolean load(){
         byte typeCheck = 0;
         byte strCheck = 0;
         Options curOptions = Options.getInstance();
@@ -324,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    protected static boolean checkTypeAr(itemReadType[] ar, itemReadType item){
+    private static boolean checkTypeAr(itemReadType[] ar, itemReadType item){
         for (int i = 0; i < ar.length; i++){
 
             if (ar[i] == item) {return true;}
@@ -333,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    protected static byte getLoadFunction(byte checkNum, itemReadType setReadCheck){
+    private static byte getLoadFunction(byte checkNum, itemReadType setReadCheck){
         if (setReadCheck == itemReadType.Weather){
             checkNum = readWeather(checkNum);
         }else if (setReadCheck == itemReadType.Reddit){
@@ -345,18 +376,18 @@ public class MainActivity extends AppCompatActivity {
         return checkNum;
     }
 
-    protected static byte readWeather(byte checkNum){
+    private static byte readWeather(byte checkNum){
         //Need to be changed for
         readInfo[curWriteSection][checkNum++] = myWeather.getString();
         return checkNum;
     }
 
-    protected static byte readReddit(byte checkNum){
+    private static byte readReddit(byte checkNum){
 
         return checkNum;
     }
 
-    protected static byte readFile(byte checkNum){
+    private static byte readFile(byte checkNum){
 
         return checkNum;
     }
