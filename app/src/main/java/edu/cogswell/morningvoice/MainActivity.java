@@ -2,6 +2,7 @@ package edu.cogswell.morningvoice;
 
 import android.app.AlarmManager;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -90,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
+        System.out.printf(getFilesDir().getPath());
         System.out.printf("\n\nStarting text to speech\n");
 
         textReader =  new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
@@ -138,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Option things
-
+        myPicker = (TimePicker)findViewById(R.id.timePicker);
         SeekBar volumeControl = (SeekBar) findViewById(R.id.volume);
 
         Button [] dayButtons = new Button[7];
@@ -151,13 +153,16 @@ public class MainActivity extends AppCompatActivity {
         dayButtons[5] = (Button)findViewById(R.id.fri);
         dayButtons[6] = (Button)findViewById(R.id.sat);
 
-        Options.getInstance().setViews(dayButtons, volumeControl, getBaseContext());
+        Options.getInstance().setViews(dayButtons, volumeControl, getBaseContext(), myPicker);
+        Options.getInstance().setMyAssets(getAssets());
+        Options.getInstance().setOptions();
 
 
         // Alarm things
 
+        System.out.printf()
         System.out.printf("Doing weather\n");
-        myWeather = new WeatherInfo();
+        myWeather = new WeatherInfo(getAssets());
 
         // Setup for adapter
         String [] headerNames = {"Options", "Weather", "Reddit", "File"};
@@ -254,27 +259,30 @@ public class MainActivity extends AppCompatActivity {
         startBut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                run();
+                MainActivity.run();
             }
         });
 
-        myPicker = (TimePicker)findViewById(R.id.timePicker);
+
 
         timeControl = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         myAlarm = new AlarmInfo(myPicker, timeControl, getApplicationContext());
+
+        // Setting up savestate
+        curSaveState = new SaveState();
 
     }
 
     public static void run(){
 
-        System.out.printf("Running");
+        System.out.printf("Running\n");
         // fix, make time secure
         if (SystemClock.elapsedRealtime() > minTimeUntilWeatherReset + timeCheckedWeather ||
                 SystemClock.elapsedRealtime() < timeCheckedWeather){
             // Update
             if (Options.getInstance().getZipCode() == 0 || Options.getInstance().getCountryCode().contains("null")){
                 if (myLoc != null){
-                    Log.d("D","Updating Weather with location");
+                    System.out.printf("Updating Weather with location");
                     timeCheckedWeather = myWeather.update(myLoc);
 
                 }else {
@@ -289,13 +297,20 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        secReadNum = 0;
         Options.getInstance().setOptions();
-        load();
-        read("Some Name");
+        //load();
+        //read("Some Name");
         // while(read("Some Name"));
+        //curSaveState.isCompleted();
+
+        readWeather((byte)0);
+        textReader.speak(readInfo[secReadNum][0].subSequence(0, readInfo[secReadNum][0].length()), TextToSpeech.QUEUE_ADD, null,
+                "Weather");
 
     }
 
+    /*
     private static boolean read(String refName){
 
         int erCheck;
@@ -319,6 +334,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static boolean load(){
+        System.out.printf("Im loading!\n");
         byte typeCheck = 0;
         byte strCheck = 0;
         Options curOptions = Options.getInstance();
@@ -375,6 +391,7 @@ public class MainActivity extends AppCompatActivity {
 
         return checkNum;
     }
+    */
 
     private static byte readWeather(byte checkNum){
         //Need to be changed for

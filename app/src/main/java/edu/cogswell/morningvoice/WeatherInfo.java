@@ -1,5 +1,6 @@
 package edu.cogswell.morningvoice;
 
+import android.content.res.AssetManager;
 import android.location.Location;
 import android.os.SystemClock;
 
@@ -23,8 +24,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
  */
 
 public class WeatherInfo {
-    private final String weatherLoc = "./././res/xml/weatherInfo.xml";
+    private final String fileName = "weatherInfo.xml";
 
+    private AssetManager myAssets;
     private String cityName;
     private String curRainType; // volume for last 3 hours
     private float curRainAmt;
@@ -61,7 +63,7 @@ public class WeatherInfo {
 
         try {
             //
-            File weatherXml = new File("Some Location");
+            InputStream weatherXml = myAssets.open(fileName);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document weatherDoc = dBuilder.parse(weatherXml);
@@ -191,8 +193,8 @@ public class WeatherInfo {
         }
     }
 
-    public WeatherInfo(){
-
+    public WeatherInfo(AssetManager inAssets){
+        myAssets = inAssets;
     }
 
     private void getWebDataToFile(String call){
@@ -208,7 +210,7 @@ public class WeatherInfo {
             connec.connect();
 
             inStream = connec.getInputStream();
-            outStream = new FileOutputStream(weatherLoc);
+            outStream = new FileOutputStream(fileName);
             byte[] buff = new byte[8 * 1024];
             int bytesRead;
             while((bytesRead = inStream.read(buff)) != -1){

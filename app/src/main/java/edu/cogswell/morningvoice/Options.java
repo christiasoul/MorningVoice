@@ -2,10 +2,9 @@ package edu.cogswell.morningvoice;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TimePicker;
@@ -16,6 +15,7 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -33,7 +33,9 @@ import javax.xml.transform.stream.StreamResult;
 public class Options extends Activity {
     private static final Options ourInstance = new Options();
 
-    private String fileDir = "./././res/xml/optionscheck.xml";
+    private String fileName = "/src/assets/optionscheck.xml";
+
+    private AssetManager myAssets;
 
     private MainActivity.itemReadType [] readOrder;
     private byte readLen;
@@ -44,7 +46,7 @@ public class Options extends Activity {
     private int voiceSpeed;
 
     private int volume;
-
+    TimePicker myTimePicker;
     //Weather
     private boolean doesWeather;
 
@@ -75,7 +77,7 @@ public class Options extends Activity {
     }
 
     private Options() {
-        setOptions();
+
     }
 
     //public byte getVoiceType() {        return voiceType;    }
@@ -116,7 +118,7 @@ public class Options extends Activity {
 
     public void writeToFile(long timeSince){
         try{
-            File optionChecks = new File(fileDir);
+            InputStream optionChecks = myAssets.open("optionscheck.xml");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document boolDoc = dBuilder.parse(optionChecks);
@@ -180,7 +182,7 @@ public class Options extends Activity {
 
 
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            Result output = new StreamResult(new File(fileDir));
+            Result output = new StreamResult(new File(getFileDir() + "/" + fileName));
             Source input = new DOMSource(boolDoc);
             xformer.transform(input, output);
 
@@ -193,7 +195,7 @@ public class Options extends Activity {
     public void writeToFile(Document xmlDoc){
         try {
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            Result output = new StreamResult(new File(fileDir));
+            Result output = new StreamResult(new File(getFileDir() + "/" + fileName));
             Source input = new DOMSource(xmlDoc);
             xformer.transform(input, output);
         }catch(Exception ex){
@@ -219,10 +221,12 @@ public class Options extends Activity {
         }
     }
 
-    public void setViews(Button [] inDayButtons, SeekBar inVolumeControl, Context inMyContext){
+    public void setViews(Button [] inDayButtons, SeekBar inVolumeControl, Context inMyContext, TimePicker inTimePicker){
         volumeControl = inVolumeControl;
         dayButtons = inDayButtons;
         myContext = inMyContext;
+        myTimePicker = inTimePicker;
+
 
         volumeControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -259,24 +263,29 @@ public class Options extends Activity {
         readOrder = new MainActivity.itemReadType[1];
         readOrder[0] = MainActivity.itemReadType.Weather;
         try{
-            System.out.printf("Trying to open file");
+            System.out.printf("Trying to open file\n");
             // XML File
-            File optionChecks = new File("./././res/values/optionscheck.xml");
+
+            InputStream optionChecks = myAssets.open("optionscheck.xml");
+            System.out.printf("Got file");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document boolDoc = dBuilder.parse(optionChecks);
-
             boolDoc.getDocumentElement().normalize();
             Element root = boolDoc.getDocumentElement();
+
 
             NodeList weatherOp = root.getElementsByTagName("Weather");
             String [] weatherList = {"reads", "city", "temperature", "humidity",
                 "pressure", "wind", "clouds", "visibility", "precipitation", "sun"};
-            boolean [] weathBool = new boolean [weatherOp.getLength()];
+            boolean [] weathBool = new boolean [weatherList.length];
 
+            System.out.printf("Reading bools\n");
+            System.out.printf(String.valueOf(weatherOp.getLength()));
             for (int i = 0; i < weatherOp.getLength(); i++){
                 weathBool[i] = Boolean.getBoolean(((Element)weatherOp.item(0)).getAttribute(weatherList[i]));
             }
+            System.out.printf("WeathBools read \n");
             doesWeather = weathBool[0];
             saysCity = weathBool[1];
             saysCurTemp = weathBool[2];
@@ -294,6 +303,8 @@ public class Options extends Activity {
             readsReddit = Boolean.getBoolean(((Element)root.getElementsByTagName("File")
                     .item(0)).getAttribute("reads"));
 
+            System.out.printf("reading other things");
+
 
             String [] optionList = {"city", "time", "zip", "country"};
             NodeList optionOp = root.getElementsByTagName("Options");
@@ -305,6 +316,8 @@ public class Options extends Activity {
             }
             countryCode = ((Element)optionOp.item(0)).getAttribute(optionList[3]);
 
+            System.out.printf("Doing alarm");
+
             NodeList alarmOp = root.getElementsByTagName("Alarm");
             String [] alarmList = {
                     "sun", "mon", "tue", "wed", "thu", "fri", "sat", "time"
@@ -314,18 +327,21 @@ public class Options extends Activity {
                 days[i] = Boolean.getBoolean(((Element)alarmOp.item(0)).getAttribute(alarmList[i]));
             }
 
+            System.out.printf("did file things");
+
             setButtonsAll();
 
-            alarmTime = ((Element)alarmOp.item(0)).getAttribute(weatherList[7]);
+            alarmTime = ((Element)alarmOp.item(0)).getAttribute(alarmList[7]);
             String [] tempTimes = alarmTime.split(":");
-            TimePicker myTimePicker = ((TimePicker)findViewById(R.id.timePicker));
             myTimePicker.setCurrentHour(Integer.parseInt(tempTimes[0]));
             myTimePicker.setCurrentMinute(Integer.parseInt(tempTimes[1]));
 
 
         }catch(FileNotFoundException ex){
+            ex.printStackTrace();
             System.out.printf("Could not find the file item in options");
         }catch(Exception e){
+            e.printStackTrace();
             System.out.printf("Some error happened in setOptions");
         }
 
@@ -354,6 +370,10 @@ public class Options extends Activity {
         if (doesWeather) readLen++;
         if (readsFile) readLen++;
 
+        // !!! hard coded to use only weather
+
+        doesWeather = true;
+        readLen = 1;
 
     }
 
@@ -389,7 +409,8 @@ public class Options extends Activity {
         }
     }
 
-    public String getFileDir(){return fileDir;}
+    public String getFileDir(){return getFileDir() + "/" + fileName;}
 
+    public void setMyAssets(AssetManager inAssets){myAssets = inAssets;}
 
 }
