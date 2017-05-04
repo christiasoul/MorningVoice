@@ -118,7 +118,7 @@ public class Options extends Activity {
 
     public void writeToFile(long timeSince){
         try{
-            InputStream optionChecks = myAssets.open("optionscheck.xml");
+            InputStream optionChecks = getResources().openRawResource(R.raw.optionscheck);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document boolDoc = dBuilder.parse(optionChecks);
@@ -182,7 +182,7 @@ public class Options extends Activity {
 
 
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            Result output = new StreamResult(new File(getFileDir() + "/" + fileName));
+            Result output = new StreamResult(myContext.getResources().openRawResourceFd(R.raw.optionscheck).createOutputStream());
             Source input = new DOMSource(boolDoc);
             xformer.transform(input, output);
 
@@ -195,7 +195,7 @@ public class Options extends Activity {
     public void writeToFile(Document xmlDoc){
         try {
             Transformer xformer = TransformerFactory.newInstance().newTransformer();
-            Result output = new StreamResult(new File(getFileDir() + "/" + fileName));
+            Result output = new StreamResult(myContext.getResources().openRawResourceFd(R.raw.optionscheck).createOutputStream());
             Source input = new DOMSource(xmlDoc);
             xformer.transform(input, output);
         }catch(Exception ex){
@@ -266,7 +266,7 @@ public class Options extends Activity {
             System.out.printf("Trying to open file\n");
             // XML File
 
-            InputStream optionChecks = myAssets.open("optionscheck.xml");
+            InputStream optionChecks = getResources().openRawResource(R.raw.optionscheck);
             System.out.printf("Got file");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
