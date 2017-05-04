@@ -1,377 +1,416 @@
 package edu.cogswell.morningvoice;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.res.AssetManager;
-import android.location.Location;
-import android.os.SystemClock;
+import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TimePicker;
 
-import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 /**
- * Created by Christian on 4/12/2017.
+ * Created by Christian on 4/6/2017.
  */
 
-public class WeatherInfo {
-    private final String fileName = "weatherInfo.xml";
+public class Options extends Activity {
+    private static final Options ourInstance = new Options();
+
+    private String fileName = "/src/assets/optionscheck.xml";
 
     private AssetManager myAssets;
-    private String cityName;
-    private String curRainType; // volume for last 3 hours
-    private float curRainAmt;
 
-    private String Overall;
+    private MainActivity.itemReadType [] readOrder;
+    private byte readLen;
+    private Context myContext;
 
-    private float curTemp; // Kelvin
-    private float curPressure; // hPa
-    private float curHumidity; // %
+    //Voice
+    //private byte voiceType;
+    private int voiceSpeed;
 
-    private float curVisibility; // Meters
+    private int volume;
+    TimePicker myTimePicker;
+    //Weather
+    private boolean doesWeather;
 
-    private float curWindSpeed; // meters/sec
-    private float curWindDirection; // degrees (meteorological)
-    private String curWindDirName;
+    private boolean metricSystem;
 
-    private float curCloudy; //%
-    private String curCloudyName;
+    private boolean saysCity;
+    private boolean saysWind;
+    private boolean saysCloudy;
+    private boolean saysPressure;
+    private boolean saysHumidity;
+    private boolean saysSunsetRise;
+    private boolean saysCurTemp;
+    private boolean saysPrecipitation;
+    private boolean saysVisibility;
+
+    private boolean readsReddit;
+
+    private boolean readsFile;
+
+    private int zipCode;
+    private String countryCode;
+
+    private String alarmTime;
+    private boolean [] days = new boolean[7];
+
+    public static Options getInstance() {
+        return ourInstance;
+    }
+
+    private Options() {
+
+    }
+
+    //public byte getVoiceType() {        return voiceType;    }
+    public int getVolume() {        return volume;    }
+    public boolean isSaysCity(){    return saysCity;    }
+    public boolean isMetricSystem(){    return metricSystem; }
+    public boolean isDoesWeather() {        return doesWeather;    }
+    public boolean isSaysWind() {        return saysWind;    }
+    public boolean isSaysCloudy() {        return saysCloudy;    }
+    public boolean isSaysPressure() {        return saysPressure;    }
+    public boolean isSaysHumidity() {        return saysHumidity;    }
+    public boolean isSaysSunsetRise() {        return saysSunsetRise;    }
+    public boolean isSaysCurTemp() {        return saysCurTemp;    }
+    public boolean isSaysPrecipitation() {        return saysPrecipitation;    }
+    public boolean isSaysVisibility(){  return saysVisibility;   }
+    public boolean isReadsReddit() {        return readsReddit;    }
+    public boolean isReadFile() {        return readsFile;    }
+    public MainActivity.itemReadType [] getReadOrder(){ return readOrder;   }
+    public byte getReadLen() {  return readLen;  }
+    public int getZipCode(){    return zipCode; }
+    public String getCountryCode(){ return countryCode; }
+    public String getAlarmTime() {  return alarmTime;    }
+    public boolean [] getDays() {   return days;    }
+    public void setDay(int dayNum) {   days[dayNum] ^= true; }
+
+    private SeekBar volumeControl;
+    private Button [] dayButtons;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
 
-    private String curSunsetTime;
-    private String curSunriseTime;
-
-    private String curWeather;
-
-
-    private enum ConversionUnit{Distance, Temperature}
-
-    private boolean usesMetric;
+    }
 
 
 
-    private void readFromFile(){
-
-        try {
-            //
-            InputStream weatherXml = myAssets.open(fileName);
+    public void writeToFile(long timeSince){
+        try{
+            InputStream optionChecks = getResources().openRawResource(R.raw.optionscheck);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document weatherDoc = dBuilder.parse(weatherXml);
+            Document boolDoc = dBuilder.parse(optionChecks);
 
-            weatherDoc.getDocumentElement().normalize();
+            boolDoc.getDocumentElement().normalize();
 
-            Element root = weatherDoc.getDocumentElement();
+            Element root = boolDoc.getDocumentElement();
 
-            Element city, sun, temperature, humidity, pressure, wind, speed,
-                    direction, clouds, visibility, precipitation, weather;
+            NodeList weatherOp = root.getElementsByTagName("Weather");
 
-            city = getElement(root, "city");
-            sun = getElement(city, "sun");
-            temperature = getElement(root, "temperature");
-            humidity = getElement(root, "humidity");
-            pressure = getElement(root, "pressure");
-            wind = getElement(root, "wind");
-            speed = getElement(wind, "speed");
-            direction = getElement(wind, "direction");
-            clouds = getElement(root, "clouds");
-            visibility = getElement(root, "visibility");
-            precipitation = getElement(root, "precipitation");
-            weather = getElement(root, "weather");
+            String [] headerList = {"Options", "Weather", "Reddit", "File", "Alarm"};
+            String [][] childList = {
+                    {"city", "time", "zip", "country", "volume"},
+                    {"reads", "city", "temperature", "humidity",
+                            "pressure", "wind", "clouds", "visibility", "precipitation", "sun"},
+                    {"reads"},
+                    {"reads"},
+                    {"sun", "mon", "tue", "wed", "thu", "fri", "sat", "time"}
+            };
 
-            if (city != null){
-                cityName = city.getAttribute("name");
-            }else{
-                cityName = null;
+            (root.getElementsByTagName(headerList[0])).item(0)
+                    .getAttributes().getNamedItem(childList[0][1]).setNodeValue(Long.toString(timeSince));
+            if (zipCode != 0) {
+                (root.getElementsByTagName(headerList[0])).item(0)
+                        .getAttributes().getNamedItem(childList[0][2]).setNodeValue(Integer.toString(zipCode));
             }
-
-            if (sun != null){
-                curSunriseTime = (sun.getAttribute("rise").split("T"))[1];
-                curSunsetTime = (sun.getAttribute("set").split("T"))[1];
-            }else {
-                curSunriseTime = null;
-                curSunsetTime = null;
+            if (countryCode != null) {
+                (root.getElementsByTagName(headerList[0])).item(0)
+                        .getAttributes().getNamedItem(childList[0][3]).setNodeValue(countryCode);
             }
-
-            if (temperature != null) {
-                curTemp = Float.parseFloat(temperature.getAttribute("value"));
-            }else{
-                curTemp = Float.NaN;
-            }
-
-            if (humidity != null){
-                curHumidity = Float.parseFloat(humidity.getAttribute("value"));
-            }else {
-                curHumidity = Float.NaN;
-            }
-
-            if (pressure != null){
-                curPressure = Float.parseFloat(pressure.getAttribute("value"));
-            }else {
-                curPressure = Float.NaN;
-            }
-
-            if (speed != null){
-                curWindSpeed = Float.parseFloat(speed.getAttribute("value"));
-            }else{
-                curWindSpeed = Float.NaN;
-            }
-
-            if (direction != null){
-                curWindDirection = Float.parseFloat(direction.getAttribute("value"));
-                curWindDirName = direction.getAttribute("name");
-            }else {
-                curWindDirection = Float.NaN;
-                curWindDirName = null;
-            }
-
-            if (clouds != null){
-                curCloudy = Float.parseFloat(clouds.getAttribute("value"));
-                curCloudyName = clouds.getAttribute("name");
-            }else{
-                curCloudy = Float.NaN;
-                curCloudyName = null;
-            }
-
-            if (visibility != null){
-                curVisibility = Float.parseFloat(visibility.getAttribute("value"));
-            }else{
-                curVisibility = Float.NaN;
-            }
-
-            if (precipitation != null){
-                if (precipitation.getAttribute("mode") .equals( "snow")){
-                    curRainType = "snow";
-                    curRainAmt = Float.parseFloat(precipitation.getAttribute("value"));
-                }else if (precipitation.getAttribute("mode").equals( "rain")){
-                    curRainType = "rain";
-                    curRainAmt = Float.parseFloat(precipitation.getAttribute("value"));
-                }else{
-                    curRainType = "No";
-                }
-            }else{
-                curRainType = "No";
-            }
-
-            if (weather != null){
-                curWeather = weather.getAttribute("value");
-            }else {
-                curWeather = null;
+            (root.getElementsByTagName(headerList[0])).item(0)
+                    .getAttributes().getNamedItem(childList[0][4]).setNodeValue(Integer.toString(volume));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][0]).setNodeValue(Boolean.toString(doesWeather));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][1]).setNodeValue(Boolean.toString(saysCity));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][2]).setNodeValue(Boolean.toString(saysCurTemp));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][3]).setNodeValue(Boolean.toString(saysHumidity));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][4]).setNodeValue(Boolean.toString(saysPressure));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][5]).setNodeValue(Boolean.toString(saysWind));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][6]).setNodeValue(Boolean.toString(saysCloudy));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][7]).setNodeValue(Boolean.toString(saysVisibility));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][8]).setNodeValue(Boolean.toString(saysPrecipitation));
+            (root.getElementsByTagName(headerList[1])).item(0)
+                    .getAttributes().getNamedItem(childList[1][9]).setNodeValue(Boolean.toString(saysSunsetRise));
+            (root.getElementsByTagName(headerList[2])).item(0)
+                    .getAttributes().getNamedItem(childList[2][0]).setNodeValue(Boolean.toString(readsReddit));
+            (root.getElementsByTagName(headerList[3])).item(0)
+                    .getAttributes().getNamedItem(childList[3][0]).setNodeValue(Boolean.toString(readsFile));
+            for (int i = 0; i < 7; i++) {
+                (root.getElementsByTagName(headerList[4])).item(0)
+                        .getAttributes().getNamedItem(childList[4][i]).setNodeValue(Boolean.toString(days[i]));
             }
 
 
-        }catch(Exception e){
-            System.out.printf("There seemed to not be a file to read from for weather");
+            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Result output = new StreamResult(myContext.getResources().openRawResourceFd(R.raw.optionscheck).createOutputStream());
+            Source input = new DOMSource(boolDoc);
+            xformer.transform(input, output);
 
+        }catch(Exception ex){
+            System.out.printf("Exiting on writeToFile()");
         }
 
     }
 
-    private Element getElement(Element root, String name)throws Exception{
+    public void writeToFile(Document xmlDoc){
         try {
-            if (root != null) {
-                NodeList nodeEle = root.getElementsByTagName(name);
-                if (nodeEle.getLength() > 0) {
-                    return (Element) nodeEle.item(0);
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }catch (Exception e){
-            throw e;
+            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            Result output = new StreamResult(myContext.getResources().openRawResourceFd(R.raw.optionscheck).createOutputStream());
+            Source input = new DOMSource(xmlDoc);
+            xformer.transform(input, output);
+        }catch(Exception ex){
+
         }
     }
 
-    public WeatherInfo(AssetManager inAssets){
-        myAssets = inAssets;
+    public void setButtonColor(Button targButton, boolean colored){
+        if (colored) {
+            targButton.setBackgroundTintList(ContextCompat.getColorStateList(
+                    myContext, R.color.button_pressed ));
+        }else{
+            targButton.setBackgroundTintList(ContextCompat.getColorStateList(
+                    myContext, R.color.button_not_pressed ));
+        }
     }
 
-    private void getWebDataToFile(String call){
-        HttpURLConnection connec = null;
-        InputStream inStream = null;
-        OutputStream outStream = null;
+    public void setButtonsAll(){
 
+
+        for (int i = 0; i < 7; i++){
+            setButtonColor(dayButtons[i], days[i]);
+        }
+    }
+
+    public void setViews(Button [] inDayButtons, SeekBar inVolumeControl, Context inMyContext, TimePicker inTimePicker){
+        volumeControl = inVolumeControl;
+        dayButtons = inDayButtons;
+        myContext = inMyContext;
+        myTimePicker = inTimePicker;
+
+
+        volumeControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int volume = progress;
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+
+        });
+
+    }
+
+    public void setOptions(){
+
+        System.out.printf("Doing option things");
+
+        Context myContext = getBaseContext();
+
+
+        //voice type/volume
+        if (volumeControl != null){
+            volume = volumeControl.getProgress();
+        }
+
+        // setup days in case
+        for (int i = 0; i < 7; i++) {   days[i] = false;    }
+
+        readOrder = new MainActivity.itemReadType[1];
+        readOrder[0] = MainActivity.itemReadType.Weather;
         try{
-            connec = (HttpURLConnection)(new URL(call)).openConnection();
-            connec.setRequestMethod("GET");
-            connec.setDoInput(true);
-            connec.setDoOutput(true);
-            connec.connect();
+            System.out.printf("Trying to open file\n");
+            // XML File
 
-            inStream = connec.getInputStream();
-            outStream = new FileOutputStream(fileName);
-            byte[] buff = new byte[8 * 1024];
-            int bytesRead;
-            while((bytesRead = inStream.read(buff)) != -1){
-                outStream.write(buff, 0, bytesRead);
+            InputStream optionChecks = getResources().openRawResource(R.raw.optionscheck);
+            System.out.printf("Got file");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document boolDoc = dBuilder.parse(optionChecks);
+            boolDoc.getDocumentElement().normalize();
+            Element root = boolDoc.getDocumentElement();
+
+
+            NodeList weatherOp = root.getElementsByTagName("Weather");
+            String [] weatherList = {"reads", "city", "temperature", "humidity",
+                "pressure", "wind", "clouds", "visibility", "precipitation", "sun"};
+            boolean [] weathBool = new boolean [weatherList.length];
+
+            System.out.printf("Reading bools\n");
+            System.out.printf(String.valueOf(weatherOp.getLength()));
+            for (int i = 0; i < weatherOp.getLength(); i++){
+                weathBool[i] = Boolean.getBoolean(((Element)weatherOp.item(0)).getAttribute(weatherList[i]));
             }
-            IOUtils.closeQuietly(inStream);
-            IOUtils.closeQuietly(outStream);
+            System.out.printf("WeathBools read \n");
+            doesWeather = weathBool[0];
+            saysCity = weathBool[1];
+            saysCurTemp = weathBool[2];
+            saysHumidity = weathBool[3];
+            saysPressure = weathBool[4];
+            saysWind = weathBool[5];
+            saysCloudy = weathBool[6];
+            saysVisibility = weathBool[7];
+            saysPrecipitation = weathBool[8];
+            saysSunsetRise = weathBool[9];
+
+            readsReddit = Boolean.getBoolean(((Element)root.getElementsByTagName("Reddit")
+                    .item(0)).getAttribute("reads"));
+            // Temporary
+            readsReddit = Boolean.getBoolean(((Element)root.getElementsByTagName("File")
+                    .item(0)).getAttribute("reads"));
+
+            System.out.printf("reading other things");
 
 
-        }catch(Throwable t){
-            System.out.printf("Could not get information from website and write to file");
-        }
+            String [] optionList = {"city", "time", "zip", "country"};
+            NodeList optionOp = root.getElementsByTagName("Options");
 
-    }
-
-    public long update(Location loc){
-
-        //GPS Things
-        float latit = (float)loc.getLatitude();
-        float longit = (float)loc.getLongitude();
-
-        String weatherCall = String.format(
-                "api.openweathermap.org/data/2.5/weather?lat=%f.2&lon=%f.2&%s",
-                latit, longit, APIKey.getInstance().getAPIKey());
-
-        getWebDataToFile(weatherCall);
-        readFromFile();
-        return SystemClock.elapsedRealtime();
-    }
-
-    public long update(){
-
-        int zipCode = Options.getInstance().getZipCode();
-        String countryCode = Options.getInstance().getCountryCode();
-
-        String weatherCall = String.format(
-            "api.openweathermap.org/data/2.5/weather?zip=%d,%s&%s",
-                zipCode, countryCode, APIKey.getInstance().getAPIKey() );
-
-        getWebDataToFile(weatherCall);
-        readFromFile();
-        return SystemClock.elapsedRealtime();
-    }
-
-    public String getString(){
-        Options curOptions = Options.getInstance();
-
-        if (curOptions.isDoesWeather()){
-            String retString = "Today";
-
-            usesMetric = curOptions.isMetricSystem();
-
-            if (curWeather != null){
-                retString += " the weather is " + curWeather + ".";
-            }
-            if (cityName != null && curOptions.isSaysCity()){
-                retString += " in " + cityName + ".";
-            }
-            if (!Float.isNaN(curTemp) && curOptions.isSaysCurTemp()){
-                retString += " it is " + String.format("%.2f",convertUnits(ConversionUnit.Temperature , curTemp, false));
-                retString += " degrees " + getUnit(ConversionUnit.Temperature, false) + ".";
-            }
-            if (!Float.isNaN(curHumidity) && curOptions.isSaysHumidity()){
-                retString += " the humidity is " + String.format("%.1f", curHumidity) + " percent " + ".";
-            }
-            if (!Float.isNaN(curPressure) && curOptions.isSaysPressure()){
-                retString += " the pressure is " + String.format("%.2f", curPressure) + " hecto Pascals " + ".";
-            }
-            if (!Float.isNaN(curWindSpeed) && curOptions.isSaysWind()){
-                retString += " the wind speed is " + String.format(("%.2f "), convertUnits(ConversionUnit.Distance ,curWindSpeed, false));
-                retString += getUnit(ConversionUnit.Distance, false) + " per second.";
-            }
-            if (curWindDirName != null && curOptions.isSaysWind()){
-                retString += " the wind is moving in the " + curWindDirName + " direction";
-            }
-            if (curCloudyName != null && curOptions.isSaysCloudy()) {
-                retString += " currently there is " + curCloudyName;
-                if (!Float.isNaN(curCloudy)) {
-                    retString += String.format("and it is %.2f %% cloudy", curCloudy);
-                }
-                retString += ".";
-            }
-            if (!Float.isNaN(curVisibility) && curOptions.isSaysVisibility()){
-                retString += String.format("the visibility is limited to %f %s.",
-                        convertUnits(ConversionUnit.Distance, curVisibility, false), getUnit(ConversionUnit.Distance, false));
-            }
-            if (curRainType != null && curOptions.isSaysPrecipitation()){
-
-                if(curRainType.contentEquals("no")){
-                    retString += " there is no rain currently";
-                }else {
-                    retString += " it is currently " + curRainType + "ing and has " + curRainType + "ed ";
-                    retString += String.format("%.2f %s", convertUnits(ConversionUnit.Distance, curRainAmt, true),
-                            getUnit(ConversionUnit.Distance, true));
-                }
-            }
-            if (curSunriseTime != null && curOptions.isSaysSunsetRise()){
-                retString += String.format(" the sun rises at %s .", curSunriseTime);
-            }
-            if (curSunsetTime != null && curOptions.isSaysSunsetRise()){
-                retString += String.format(" the sun sets at %s . ", curSunsetTime);
-            }
-
-            return retString;
-
-        }else {
-            return null;
-        }
-
-    }
-
-
-
-    private float convertUnits(ConversionUnit unit, float item, boolean rain){
-        if (usesMetric){
-            if (unit == ConversionUnit.Temperature){
-                return item - 273.14f;
+            if (((Element)optionOp.item(0)).getAttribute(optionList[2]).contentEquals("null")){
+                zipCode = 0;
             }else {
-                return item;
+                zipCode = Integer.getInteger(((Element) optionOp.item(0)).getAttribute(optionList[2]));
             }
-        }else {
-            if (unit == ConversionUnit.Distance) {
-                if (rain){
-                    return (item * .0393701f);
-                }else{
-                    return (item * 3.28084f);
-                }
-            } else if (unit == ConversionUnit.Temperature) {
-                return ((item * 1.8f) - 459.67f);
-            }else{
-                return 0;
+            countryCode = ((Element)optionOp.item(0)).getAttribute(optionList[3]);
+
+            System.out.printf("Doing alarm");
+
+            NodeList alarmOp = root.getElementsByTagName("Alarm");
+            String [] alarmList = {
+                    "sun", "mon", "tue", "wed", "thu", "fri", "sat", "time"
+            };
+
+            for (int i = 0; i < 7; i++) {
+                days[i] = Boolean.getBoolean(((Element)alarmOp.item(0)).getAttribute(alarmList[i]));
             }
+
+            System.out.printf("did file things");
+
+            setButtonsAll();
+
+            alarmTime = ((Element)alarmOp.item(0)).getAttribute(alarmList[7]);
+            String [] tempTimes = alarmTime.split(":");
+            myTimePicker.setCurrentHour(Integer.parseInt(tempTimes[0]));
+            myTimePicker.setCurrentMinute(Integer.parseInt(tempTimes[1]));
+
+
+        }catch(FileNotFoundException ex){
+            ex.printStackTrace();
+            System.out.printf("Could not find the file item in options");
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.printf("Some error happened in setOptions");
+        }
+
+        // Set order
+        /*
+        doesWeather = ((CheckBox)findViewById(R.id.doesWeather)).isChecked();
+        metricSystem = ((CheckBox)findViewById(R.id.metricSystem)).isChecked();
+        saysWind = ((CheckBox)findViewById(R.id.saysWind)).isChecked();
+        saysCloudy = ((CheckBox)findViewById(R.id.saysCloudy)).isChecked();
+        saysPressure = ((CheckBox)findViewById(R.id.saysPressure)).isChecked();
+        saysHumidity = ((CheckBox)findViewById(R.id.saysHumidity)).isChecked();
+        saysSunsetRise = ((CheckBox)findViewById(R.id.saysSunsetRise)).isChecked();
+        saysHighLowTemp = ((CheckBox)findViewById(R.id.saysHighLowTemp)).isChecked();
+        saysCurTemp = ((CheckBox)findViewById(R.id.saysCurTemp)).isChecked();
+        saysPrecipitation = ((CheckBox)findViewById(R.id.saysPrecipitation)).isChecked();
+        //saysUVIndex = ((CheckBox)findViewById(R.id.saysUVIndex)).isChecked();
+        //saysAirPollution = ((CheckBox)findViewById(R.id.saysAirPollution)).isChecked();
+
+        readsReddit = ((CheckBox)findViewById(R.id.readsReddit)).isChecked();
+
+        readsFile = ((CheckBox)findViewById(R.id.readsFile)).isChecked();
+        */
+
+        readLen = 0;
+        if (readsReddit) readLen++;
+        if (doesWeather) readLen++;
+        if (readsFile) readLen++;
+
+        // !!! hard coded to use only weather
+
+        doesWeather = true;
+        readLen = 1;
+
+    }
+
+    public boolean [][] getBools(){
+        boolean [][] retBool = {
+                {},
+                {doesWeather, saysCity, saysCurTemp, saysHumidity, saysPressure, saysWind,
+                    saysCloudy, saysVisibility, saysPrecipitation, saysSunsetRise},
+                {readsReddit},
+                {readsFile}
+        };
+        return retBool;
+    }
+
+    public void setBool(int head, int child, boolean state){
+        if (head == 1){
+            if (child == 0){    doesWeather = state;    }
+            else if (child == 1){   saysCity = state;   }
+            else if (child == 2){   saysCurTemp = state;}
+            else if (child == 3){   saysHumidity = state;}
+            else if (child == 4){   saysPressure = state;}
+            else if (child == 5){   saysWind = state;}
+            else if (child == 6){   saysCloudy = state;}
+            else if (child == 7){   saysVisibility = state;}
+            else if (child == 8){   saysPrecipitation = state;}
+            else if (child == 9){   saysSunsetRise = state;}
+        }
+        else if (head == 2){
+            if (child == 0){    readsReddit = state;    }
+        }
+        else if (head == 3){
+            if (child == 0){    readsReddit = state;    }
         }
     }
 
-    private String getUnit(ConversionUnit unit, boolean rain){
-        if (unit == ConversionUnit.Distance){
-            if (usesMetric){
-                if (rain){
-                    return "millimeters";
-                }else {
-                    return "meters";
-                }
-            }else {
-                if(rain){
-                    return "inches";
-                }else {
-                    return "feet";
-                }
-            }
-        }else if (unit == ConversionUnit.Temperature){
-            if (usesMetric){
-                return "Celcius";
-            }else{
-                return "Farenheit";
-            }
-        }else {
-            return null;
-        }
-    }
+    public String getFileDir(){return getFileDir() + "/" + fileName;}
 
-
+    public void setMyAssets(AssetManager inAssets){myAssets = inAssets;}
 
 }
