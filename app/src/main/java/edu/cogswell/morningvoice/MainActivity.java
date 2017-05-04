@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         Log.d("D","Doing Location");
-        locManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locManager = (LocationManager) this.getSystemService(getBaseContext().LOCATION_SERVICE);
 
         if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP ) {
             if (ContextCompat.checkSelfPermission(this,
@@ -138,6 +138,8 @@ public class MainActivity extends AppCompatActivity {
             myLoc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             Log.d("D","Got Location");
         }
+
+        if (myLoc == null) {System.out.printf("\nLocation is null!\n");}
 
         //Option things
         myPicker = (TimePicker)findViewById(R.id.timePicker);
@@ -154,15 +156,18 @@ public class MainActivity extends AppCompatActivity {
         dayButtons[6] = (Button)findViewById(R.id.sat);
 
         Options.getInstance().setViews(dayButtons, volumeControl, getBaseContext(), myPicker);
-        Options.getInstance().setMyAssets(getAssets());
         Options.getInstance().setOptions();
+        if (Long.getLong(Options.getInstance().getTimeSinceLast()) != null){
+            timeCheckedWeather = Long.parseLong(Options.getInstance().getTimeSinceLast());
+        }else{
+            timeCheckedWeather = 0;
+        }
 
 
         // Alarm things
 
-        System.out.printf()
         System.out.printf("Doing weather\n");
-        myWeather = new WeatherInfo(getAssets());
+        myWeather = new WeatherInfo(getBaseContext());
 
         // Setup for adapter
         String [] headerNames = {"Options", "Weather", "Reddit", "File"};
@@ -273,12 +278,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+
+        Options.getInstance().writeToFile(timeCheckedWeather);
+    }
+
     public static void run(){
 
         System.out.printf("Running\n");
-        // fix, make time secure
+        // Making sure that enough time has passed since the last update to weather before updating again. Uses time since boot
         if (SystemClock.elapsedRealtime() > minTimeUntilWeatherReset + timeCheckedWeather ||
-                SystemClock.elapsedRealtime() < timeCheckedWeather){
+                timeCheckedWeather == 0 ){
             // Update
             if (Options.getInstance().getZipCode() == 0 || Options.getInstance().getCountryCode().contains("null")){
                 if (myLoc != null){
@@ -286,19 +298,21 @@ public class MainActivity extends AppCompatActivity {
                     timeCheckedWeather = myWeather.update(myLoc);
 
                 }else {
+                    System.out.printf("prompt for zip code");
                     // Prompt user to input zip code and country code or turn off weather
                 }
             }else{
                 //
-                Log.d("D","Updating Weather");
+                System.out.printf("D","Updating Weather");
                 timeCheckedWeather = myWeather.update();
 
             }
 
+        }else{
+            System.out.printf("You have summoned me too soon");
         }
 
         secReadNum = 0;
-        Options.getInstance().setOptions();
         //load();
         //read("Some Name");
         // while(read("Some Name"));

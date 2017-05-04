@@ -69,6 +69,7 @@ public class Options extends Activity {
     private int zipCode;
     private String countryCode;
 
+    private String timeSinceLast;
     private String alarmTime;
     private boolean [] days = new boolean[7];
 
@@ -102,6 +103,7 @@ public class Options extends Activity {
     public String getAlarmTime() {  return alarmTime;    }
     public boolean [] getDays() {   return days;    }
     public void setDay(int dayNum) {   days[dayNum] ^= true; }
+    public String getTimeSinceLast(){   return timeSinceLast;   }
 
     private SeekBar volumeControl;
     private Button [] dayButtons;
@@ -118,7 +120,7 @@ public class Options extends Activity {
 
     public void writeToFile(long timeSince){
         try{
-            InputStream optionChecks = getResources().openRawResource(R.raw.optionscheck);
+            InputStream optionChecks = myContext.getResources().openRawResource(R.raw.optionscheck);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document boolDoc = dBuilder.parse(optionChecks);
@@ -249,9 +251,6 @@ public class Options extends Activity {
 
         System.out.printf("Doing option things");
 
-        Context myContext = getBaseContext();
-
-
         //voice type/volume
         if (volumeControl != null){
             volume = volumeControl.getProgress();
@@ -266,7 +265,7 @@ public class Options extends Activity {
             System.out.printf("Trying to open file\n");
             // XML File
 
-            InputStream optionChecks = getResources().openRawResource(R.raw.optionscheck);
+            InputStream optionChecks = myContext.getResources().openRawResource(R.raw.optionscheck);
             System.out.printf("Got file");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -277,7 +276,7 @@ public class Options extends Activity {
 
             NodeList weatherOp = root.getElementsByTagName("Weather");
             String [] weatherList = {"reads", "city", "temperature", "humidity",
-                "pressure", "wind", "clouds", "visibility", "precipitation", "sun"};
+                    "pressure", "wind", "clouds", "visibility", "precipitation", "sun"};
             boolean [] weathBool = new boolean [weatherList.length];
 
             System.out.printf("Reading bools\n");
@@ -308,6 +307,8 @@ public class Options extends Activity {
 
             String [] optionList = {"city", "time", "zip", "country"};
             NodeList optionOp = root.getElementsByTagName("Options");
+
+            timeSinceLast = ((Element)optionOp.item(0)).getAttribute(optionList[1]);
 
             if (((Element)optionOp.item(0)).getAttribute(optionList[2]).contentEquals("null")){
                 zipCode = 0;
@@ -359,9 +360,7 @@ public class Options extends Activity {
         saysPrecipitation = ((CheckBox)findViewById(R.id.saysPrecipitation)).isChecked();
         //saysUVIndex = ((CheckBox)findViewById(R.id.saysUVIndex)).isChecked();
         //saysAirPollution = ((CheckBox)findViewById(R.id.saysAirPollution)).isChecked();
-
         readsReddit = ((CheckBox)findViewById(R.id.readsReddit)).isChecked();
-
         readsFile = ((CheckBox)findViewById(R.id.readsFile)).isChecked();
         */
 
@@ -381,7 +380,7 @@ public class Options extends Activity {
         boolean [][] retBool = {
                 {},
                 {doesWeather, saysCity, saysCurTemp, saysHumidity, saysPressure, saysWind,
-                    saysCloudy, saysVisibility, saysPrecipitation, saysSunsetRise},
+                        saysCloudy, saysVisibility, saysPrecipitation, saysSunsetRise},
                 {readsReddit},
                 {readsFile}
         };
@@ -411,6 +410,5 @@ public class Options extends Activity {
 
     public String getFileDir(){return getFileDir() + "/" + fileName;}
 
-    public void setMyAssets(AssetManager inAssets){myAssets = inAssets;}
 
 }
